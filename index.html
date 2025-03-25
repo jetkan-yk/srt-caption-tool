@@ -25,8 +25,6 @@
         display: flex;
         flex: 1;
         flex-direction: column;
-        width: 50%;
-        height: 100%; /* Ensure columns respect container height */
       }
 
       textarea {
@@ -34,31 +32,25 @@
         font-size: large;
         flex: 1;
         margin-bottom: 10px;
-        overflow: auto; /* Add scrollbars instead of expanding */
-        max-height: calc(70vh - 120px); /* Account for heading and button */
-        box-sizing: border-box;
       }
 
       button {
         font-size: xx-large;
         width: 100%;
         padding: 10px;
-        margin-top: auto;
       }
 
       .gutter-container {
         display: flex;
         flex: 1;
-        position: relative;
-        margin-bottom: 10px;
-        overflow: hidden; /* Prevent container from expanding */
-        max-height: calc(70vh - 120px); /* Same as textarea */
+        overflow: hidden;
       }
 
       .gutter {
         width: 40px;
         text-align: right;
         padding-right: 10px;
+        margin-bottom: 10px;
         font-size: large;
         color: gray;
         overflow: hidden;
@@ -66,18 +58,6 @@
         background-color: #f0f0f0;
         border-right: 1px solid #ccc;
         white-space: pre;
-        height: auto; /* Let it size with its content */
-      }
-
-      #captionText {
-        flex: 1;
-        box-sizing: border-box;
-        overflow-y: auto; /* Add vertical scrolling */
-        height: 100%; /* Fill container height */
-      }
-
-      #srtInput {
-        box-sizing: border-box;
       }
     </style>
   </head>
@@ -198,12 +178,12 @@
         const lines = captionText.value.split(/\r?\n/);
         let lineNumber = 1;
         const lineNumbers = lines.map((line) =>
-          line.trim() ? lineNumber++ : ""
+          line.trim() ? lineNumber++ : " "
         );
 
         gutter.textContent = lineNumbers.join("\n");
 
-        // Sync scroll position instead of height
+        // Sync scroll position
         gutter.scrollTop = captionText.scrollTop;
       }
 
