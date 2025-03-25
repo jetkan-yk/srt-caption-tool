@@ -9,6 +9,8 @@
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
           sans-serif;
+        margin: 0;
+        padding: 20px;
       }
 
       .container {
@@ -23,17 +25,59 @@
         display: flex;
         flex: 1;
         flex-direction: column;
+        width: 50%;
+        height: 100%; /* Ensure columns respect container height */
       }
 
       textarea {
-        height: 100%;
-        margin-bottom: 10px;
         resize: none;
         font-size: large;
+        flex: 1;
+        margin-bottom: 10px;
+        overflow: auto; /* Add scrollbars instead of expanding */
+        max-height: calc(70vh - 120px); /* Account for heading and button */
+        box-sizing: border-box;
       }
 
       button {
         font-size: xx-large;
+        width: 100%;
+        padding: 10px;
+        margin-top: auto;
+      }
+
+      .gutter-container {
+        display: flex;
+        flex: 1;
+        position: relative;
+        margin-bottom: 10px;
+        overflow: hidden; /* Prevent container from expanding */
+        max-height: calc(70vh - 120px); /* Same as textarea */
+      }
+
+      .gutter {
+        width: 40px;
+        text-align: right;
+        padding-right: 10px;
+        font-size: large;
+        color: gray;
+        overflow: hidden;
+        user-select: none;
+        background-color: #f0f0f0;
+        border-right: 1px solid #ccc;
+        white-space: pre;
+        height: auto; /* Let it size with its content */
+      }
+
+      #captionText {
+        flex: 1;
+        box-sizing: border-box;
+        overflow-y: auto; /* Add vertical scrolling */
+        height: 100%; /* Fill container height */
+      }
+
+      #srtInput {
+        box-sizing: border-box;
       }
     </style>
   </head>
@@ -41,21 +85,25 @@
     <h1>SRT Caption Tool</h1>
     <div class="container">
       <div class="column">
-        <h2>SRT Content</h2>
+        <h2>SRT</h2>
         <textarea
           id="srtInput"
           rows="15"
-          placeholder="Paste SRT content here..."
+          placeholder="Paste SRT here..."
         ></textarea>
         <button onclick="extractCaptions()">Extract Captions</button>
       </div>
       <div class="column">
         <h2>Captions</h2>
-        <textarea
-          id="captionText"
-          rows="15"
-          placeholder="Extracted captions will appear here..."
-        ></textarea>
+        <div class="gutter-container">
+          <div id="gutter" class="gutter"></div>
+          <textarea
+            id="captionText"
+            rows="15"
+            placeholder="Extracted captions will appear here..."
+            oninput="updateGutter()"
+          ></textarea>
+        </div>
         <button id="replaceUndoButton" onclick="toggleReplaceUndo()">
           Replace Captions
         </button>
@@ -65,13 +113,16 @@
     <script>
       let originalSrtContent = ""; // Store the original SRT content
 
-      // Extract every 4th line starting with the 3rd (index 2) from the SRT input.
+      // Extract every 3rd line starting with the 3rd (index 2) from the SRT input.
       function extractCaptions() {
         const srtContent = document.getElementById("srtInput").value;
-        const lines = srtContent.split(/\r?\n/);
+        const lines = srtContent
+          .split(/\r?\n/)
+          .filter((line) => line.trim() !== "");
+
         const extracted = [];
-        // Assuming SRT blocks: index, timecode, caption, blank
-        for (let i = 2; i < lines.length; i += 4) {
+        // Assuming SRT blocks: index, timecode, caption
+        for (let i = 2; i < lines.length; i += 3) {
           extracted.push(lines[i]);
         }
         document.getElementById("captionText").value = extracted.join("\n\n");
@@ -79,6 +130,9 @@
         // Reset the button to "Replace Captions"
         document.getElementById("replaceUndoButton").textContent =
           "Replace Captions";
+
+        // Update the gutter to reflect the new content
+        updateGutter();
       }
 
       function toggleReplaceUndo() {
@@ -107,7 +161,9 @@
 
         const replacedLines = [];
         // Process existing SRT blocks (assumed groups of 4 lines)
-        let blockCount = Math.floor(srtLines.length / 4);
+        let blockCount = Math.ceil(
+          srtLines.filter((line) => line.trim() !== "").length / 3
+        );
         for (let b = 0; b < blockCount; b++) {
           let start = b * 4;
           replacedLines.push(srtLines[start]); // index
@@ -135,6 +191,28 @@
         // Update the SRT input box with the replaced content
         document.getElementById("srtInput").value = replacedLines.join("\n");
       }
+
+      function updateGutter() {
+        const captionText = document.getElementById("captionText");
+        const gutter = document.getElementById("gutter");
+        const lines = captionText.value.split(/\r?\n/);
+        let lineNumber = 1;
+        const lineNumbers = lines.map((line) =>
+          line.trim() ? lineNumber++ : ""
+        );
+
+        gutter.textContent = lineNumbers.join("\n");
+
+        // Sync scroll position instead of height
+        gutter.scrollTop = captionText.scrollTop;
+      }
+
+      // Add scroll event handler to keep gutter in sync when scrolling
+      document
+        .getElementById("captionText")
+        .addEventListener("scroll", function () {
+          document.getElementById("gutter").scrollTop = this.scrollTop;
+        });
     </script>
   </body>
 </html>
